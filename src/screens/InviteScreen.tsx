@@ -23,7 +23,7 @@ export function InviteScreen({ onDone, onLogout }: { onDone: () => void; onLogou
         <Text style={styles.emoji}>🔗</Text>
         <Text style={styles.title}>Hesabını eşleştir</Text>
         <Text style={styles.text}>Öğretmeninin verdiği davet kodunu gir. Böylece yalnızca sana bağlı ders ve gelişim bilgileri görünür.</Text>
-        <TextInput value={code} onChangeText={(t) => setCode(t.toUpperCase())} autoCapitalize="characters" placeholder="Örn. AHMET-7K2P" style={styles.input} />
+        <TextInput value={code} onChangeText={(t: string) => setCode(t.toUpperCase())} autoCapitalize="characters" placeholder="Örn. AHMET-7K2P" style={styles.input} />
         <Pressable style={styles.button} onPress={submit}><Text style={styles.buttonText}>{busy ? 'Kontrol ediliyor...' : 'Kodu kullan'}</Text></Pressable>
         <Pressable onPress={onLogout}><Text style={styles.logout}>Çıkış yap</Text></Pressable>
       </View>
