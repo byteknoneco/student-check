@@ -37,5 +37,13 @@ export const demoData: DashboardData = {
     { id: 'e2', student_id: 's1', student_name: 'Ahmet Yılmaz', subject_name: 'Matematik', title: 'Konu Tarama 2', exam_date: at(-21, 12), score: 78, max_score: 100 },
     { id: 'e3', student_id: 's1', student_name: 'Ahmet Yılmaz', subject_name: 'Matematik', title: 'Konu Tarama 3', exam_date: at(-5, 12), score: 84, max_score: 100 },
   ],
+  packages: [
+    { id: 'p1', student_id: 's1', student_name: 'Ahmet Yılmaz', total_lessons: 10, used_lessons: 6, remaining_lessons: 4, price: 5000, active: true },
+    { id: 'p2', student_id: 's2', student_name: 'Elif Kaya', total_lessons: 8, used_lessons: 7, remaining_lessons: 1, price: 4000, active: true },
+  ],
+  payments: [
+    { id: 'pay1', student_id: 's1', student_name: 'Ahmet Yılmaz', amount: 2500, paid_at: at(-4, 12), note: 'Paket ödemesi' },
+  ],
+  invites: [],
   packageInfo: { total_lessons: 10, used_lessons: 6, remaining_lessons: 4 },
 };
