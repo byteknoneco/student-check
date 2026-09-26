@@ -2,13 +2,15 @@
   "expo": {
     "name": "DersTakip+",
     "slug": "ders-takip-plus",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.derstakipplus.app",
-      "versionCode": 1,
-      "permissions": ["INTERNET"]
+      "versionCode": 2,
+      "permissions": [
+        "INTERNET"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.derstakipplus.app",
