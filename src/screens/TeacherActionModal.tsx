@@ -357,7 +357,7 @@ export function TeacherActionModal({
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(18,22,40,0.48)' },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(18,22,40,0.48)' },
   sheet: { maxHeight: '92%', backgroundColor: theme.colors.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 10 },
   handle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 99, backgroundColor: '#D5D9E5', marginBottom: 8 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: theme.colors.border },
