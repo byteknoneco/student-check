@@ -20,7 +20,7 @@ export const supabase = isSupabaseConfigured
   : null;
 
 if (supabase && Platform.OS !== 'web') {
-  AppState.addEventListener('change', (state) => {
+  AppState.addEventListener('change', (state: string) => {
     if (state === 'active') supabase.auth.startAutoRefresh();
     else supabase.auth.stopAutoRefresh();
   });
