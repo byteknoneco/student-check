@@ -24,6 +24,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Verify Supabase configuration
+        run: |
+          if [ -z "$EXPO_PUBLIC_SUPABASE_URL" ]; then
+            echo "::error::EXPO_PUBLIC_SUPABASE_URL GitHub Secret tanimli degil."
+            exit 1
+          fi
+
+          if [ -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY GitHub Secret tanimli degil."
+            exit 1
+          fi
+
+          echo "Supabase configuration found."
+          echo "Demo build is disabled."
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -63,7 +78,9 @@ jobs:
           ./gradlew --no-daemon assembleRelease
 
       - name: Show generated APK files
-        run: find android/app/build/outputs/apk -type f -name "*.apk" -print
+        run: |
+          echo "Generated APK files:"
+          find android/app/build/outputs/apk -type f -name "*.apk" -print
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
