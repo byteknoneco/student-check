@@ -17,6 +17,7 @@ export type Student = {
 };
 
 export type LessonStatus = 'planned' | 'completed' | 'cancelled';
+export type AttendanceStatus = 'pending' | 'present' | 'absent';
 
 export type Lesson = {
   id: string;
@@ -28,8 +29,10 @@ export type Lesson = {
   status: LessonStatus;
   topic: string | null;
   teacher_note: string | null;
-  attendance: 'pending' | 'present' | 'absent';
+  attendance: AttendanceStatus;
 };
+
+export type HomeworkStatus = 'assigned' | 'submitted' | 'reviewed';
 
 export type Homework = {
   id: string;
@@ -39,7 +42,7 @@ export type Homework = {
   title: string;
   description: string | null;
   due_at: string;
-  status: 'assigned' | 'submitted' | 'reviewed';
+  status: HomeworkStatus;
 };
 
 export type ExamResult = {
@@ -53,6 +56,36 @@ export type ExamResult = {
   max_score: number;
 };
 
+export type LessonPackage = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  total_lessons: number;
+  used_lessons: number;
+  remaining_lessons: number;
+  price: number | null;
+  active: boolean;
+};
+
+export type Payment = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  amount: number;
+  paid_at: string;
+  note: string | null;
+};
+
+export type Invite = {
+  id: string;
+  student_id: string;
+  student_name: string;
+  target_role: 'parent' | 'student';
+  code: string;
+  expires_at: string;
+  used_at: string | null;
+};
+
 export type PackageInfo = {
   total_lessons: number;
   used_lessons: number;
@@ -64,5 +97,19 @@ export type DashboardData = {
   lessons: Lesson[];
   homework: Homework[];
   exams: ExamResult[];
+  packages: LessonPackage[];
+  payments: Payment[];
+  invites: Invite[];
   packageInfo: PackageInfo | null;
 };
+
+export type TeacherActionRequest =
+  | { type: 'student' }
+  | { type: 'lesson' }
+  | { type: 'homework' }
+  | { type: 'exam' }
+  | { type: 'payment' }
+  | { type: 'package' }
+  | { type: 'invite' }
+  | { type: 'completeLesson'; lesson: Lesson }
+  | { type: 'reviewHomework'; homework: Homework };
