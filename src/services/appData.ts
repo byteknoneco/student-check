@@ -75,7 +75,7 @@ export async function loadDashboard(role: UserRole, userId: string): Promise<Das
     notificationQuery,
     supabase.from('topic_progress').select('id,student_id,subject_name,topic_name,mastery_percent,note,updated_at').in('student_id', ids).order('updated_at', { ascending: false }),
     supabase.from('study_goals').select('id,student_id,title,target_value,current_value,due_date,completed').in('student_id', ids).order('created_at', { ascending: false }),
-    supabase.from('messages').select('id,teacher_id,student_id,sender_id,body,created_at').in('student_id', ids).order('created_at'),
+    supabase.from('messages').select('id,teacher_id,student_id,sender_id,sender_name,body,created_at').in('student_id', ids).order('created_at'),
   ];
   if (role === 'teacher') queries.push(supabase.from('invites').select('id,student_id,target_role,code,expires_at,used_at,students(full_name)').eq('teacher_id', userId).order('created_at', { ascending: false }).limit(50));
 
