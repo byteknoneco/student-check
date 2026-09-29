@@ -67,7 +67,11 @@ export default function App(){
     if(!supabase){if(profile)setData(await loadDashboard(profile.role,profile.id));setLoading(false);return;}
     if(!authReady)return;
     if(!session){setProfile(null);setAvatarUri(null);setData(emptyData);setLoading(false);return;}
-    showSpinner?setRefreshing(true):setLoading(true);
+    // Full-screen loading is only for the first authenticated load.
+    // Silent data refreshes (messages, notifications, realtime updates) must not
+    // unmount open modals; otherwise their mount effects can trigger a refresh loop.
+    if(showSpinner)setRefreshing(true);
+    else if(!profile)setLoading(true);
     try{
       const{data:p,error}=await supabase.from('profiles').select('id,full_name,role,avatar_url').eq('id',session.user.id).single();
       if(error)throw error;
