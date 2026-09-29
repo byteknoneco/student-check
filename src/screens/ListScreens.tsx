@@ -2,10 +2,10 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Pill, SectionTitle } from '../components/UI';
 import { DashboardData, Homework, Lesson, TeacherActionRequest, UserRole } from '../types';
-import { submitHomework } from '../services/appData';
+import { deleteMyAccount, submitHomework } from '../services/appData';
 import { theme } from '../theme';
 
-export function StudentsScreen({ data, onAction }: { data: DashboardData; onAction: (request: TeacherActionRequest) => void }) {
+export function StudentsScreen({ data, onAction, onSelectStudent }: { data: DashboardData; onAction: (request: TeacherActionRequest) => void; onSelectStudent?: (studentId: string) => void }) {
   return (
     <View>
       <SectionTitle title="Öğrenciler" action="+ Öğrenci ekle" onPress={() => onAction({ type: 'student' })} />
@@ -13,7 +13,7 @@ export function StudentsScreen({ data, onAction }: { data: DashboardData; onActi
         {data.students.length ? data.students.map((s, i) => {
           const pack = data.packages.find((p) => p.student_id === s.id && p.active);
           return (
-            <View key={s.id} style={[styles.row, i > 0 && styles.border]}>
+            <Pressable key={s.id} onPress={() => onSelectStudent?.(s.id)} style={[styles.row, i > 0 && styles.border]}>
               <View style={styles.avatar}><Text style={styles.avatarText}>{s.full_name.charAt(0)}</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{s.full_name}</Text>
@@ -21,7 +21,7 @@ export function StudentsScreen({ data, onAction }: { data: DashboardData; onActi
                 <Text style={styles.meta}>{pack ? `${pack.remaining_lessons}/${pack.total_lessons} ders kaldı` : 'Aktif paket yok'}</Text>
               </View>
               <Pill tone={s.active ? 'success' : 'neutral'}>{s.active ? 'Aktif' : 'Pasif'}</Pill>
-            </View>
+            </Pressable>
           );
         }) : <Empty text="Henüz öğrenci eklenmedi." />}
       </Card>
@@ -52,6 +52,7 @@ export function CalendarScreen({
             key={l.id}
             disabled={role !== 'teacher' || l.status === 'completed' || l.status === 'cancelled'}
             onPress={() => onAction?.({ type: 'completeLesson', lesson: l })}
+            onLongPress={() => onAction?.({ type: 'lessonManage', lesson: l })}
             style={[styles.row, i > 0 && styles.border]}
           >
             <View style={styles.dateBox}><Text style={styles.dateDay}>{new Date(l.starts_at).getDate()}</Text><Text style={styles.dateMon}>{new Date(l.starts_at).toLocaleDateString('tr-TR', { month: 'short' })}</Text></View>
@@ -59,7 +60,7 @@ export function CalendarScreen({
               <Text style={styles.title}>{role === 'teacher' ? `${l.student_name} · ` : ''}{l.subject_name}</Text>
               <Text style={styles.meta}>{new Date(l.starts_at).toLocaleString('tr-TR', { weekday: 'long', hour: '2-digit', minute: '2-digit' })}</Text>
               <Text style={styles.meta}>{l.topic ?? 'Konu girilmedi'}</Text>
-              {role === 'teacher' && l.status === 'planned' ? <Text style={styles.tapHint}>Dokun → ders raporu</Text> : null}
+              {role === 'teacher' && l.status === 'planned' ? <Text style={styles.tapHint}>Dokun: rapor / Basili tut: iptal-ertele</Text> : null}
             </View>
             <Pill tone={l.status === 'completed' ? 'success' : l.status === 'cancelled' ? 'danger' : 'primary'}>{l.status === 'completed' ? 'Tamamlandı' : l.status === 'cancelled' ? 'İptal' : 'Planlandı'}</Pill>
           </Pressable>
@@ -141,6 +142,7 @@ export function ProfileScreen({ role, isDemo, onLogout, onSwitchDemoRole }: { ro
         {!isDemo ? <View style={styles.infoBox}><Text style={styles.infoTitle}>Bulut senkronizasyonu aktif</Text><Text style={styles.meta}>Bu telefondaki işlemler ortak Supabase veritabanına kaydedilir ve bağlı hesaplara yansır.</Text></View> : null}
         {isDemo ? <View style={styles.demoBox}><Text style={styles.demoTitle}>Rolleri önizle</Text><View style={styles.roleRow}>{(['teacher','parent','student'] as UserRole[]).map(r => <Pressable key={r} onPress={() => onSwitchDemoRole?.(r)} style={[styles.roleButton, role === r && styles.roleButtonActive]}><Text style={[styles.roleButtonText, role === r && styles.roleButtonTextActive]}>{r === 'teacher' ? 'Öğretmen' : r === 'parent' ? 'Veli' : 'Öğrenci'}</Text></Pressable>)}</View></View> : null}
         <Pressable style={styles.logoutButton} onPress={onLogout}><Text style={styles.logoutText}>{isDemo ? 'Demo başlangıcına dön' : 'Çıkış yap'}</Text></Pressable>
+        {!isDemo ? <Pressable style={styles.deleteButton} onPress={() => Alert.alert('Hesabi sil', 'Bu islem hesabini ve bagli verilerini kalici olarak siler. Devam edilsin mi?', [{ text: 'Vazgec', style: 'cancel' }, { text: 'Hesabi sil', style: 'destructive', onPress: async () => { try { await deleteMyAccount(); await onLogout(); } catch (error: any) { Alert.alert('Silinemedi', error?.message ?? 'Hesap silinemedi.'); } } }])}><Text style={styles.deleteText}>Hesabimi kalici olarak sil</Text></Pressable> : null}
       </Card>
     </View>
   );
@@ -181,4 +183,6 @@ const styles = StyleSheet.create({
   roleButtonTextActive: { color: 'white' },
   logoutButton: { marginTop: 20, borderWidth: 1, borderColor: '#F2C7CD', backgroundColor: '#FFF6F7', padding: 14, borderRadius: 14, alignItems: 'center' },
   logoutText: { color: theme.colors.danger, fontWeight: '900' },
+  deleteButton: { marginTop: 10, padding: 12, borderRadius: 12, alignItems: 'center' },
+  deleteText: { color: theme.colors.textMuted, fontWeight: '800', fontSize: 11, textDecorationLine: 'underline' },
 });

@@ -12,6 +12,20 @@ export function AuthScreen() {
   const [role, setRole] = useState<UserRole>('parent');
   const [loading, setLoading] = useState(false);
 
+
+  const resetPassword = async () => {
+    if (!supabase) return;
+    if (!email.trim()) return Alert.alert('E-posta gerekli', 'Once e-posta adresini gir.');
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      if (error) throw error;
+      Alert.alert('Baglanti gonderildi', 'Sifre yenileme e-postasi gonderildi.');
+    } catch (error: any) {
+      Alert.alert('Islem basarisiz', error.message ?? 'Sifre yenileme baslatilamadi.');
+    } finally { setLoading(false); }
+  };
+
   const submit = async () => {
     if (!supabase) return;
     if (!email || !password || (isRegister && !fullName)) return Alert.alert('Eksik bilgi', 'Lütfen gerekli alanları doldurun.');
@@ -56,6 +70,7 @@ export function AuthScreen() {
         <Pressable onPress={submit} style={styles.primaryButton} disabled={loading}>
           {loading ? <ActivityIndicator color="white" /> : <Text style={styles.primaryButtonText}>{isRegister ? 'Kayıt ol' : 'Giriş yap'}</Text>}
         </Pressable>
+        {!isRegister ? <Pressable onPress={resetPassword}><Text style={styles.forgotText}>Sifremi unuttum</Text></Pressable> : null}
         <Pressable onPress={() => setIsRegister((v) => !v)}><Text style={styles.switchText}>{isRegister ? 'Zaten hesabın var mı? Giriş yap' : 'Yeni misin? Hesap oluştur'}</Text></Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -78,5 +93,6 @@ const styles = StyleSheet.create({
   roleTextActive: { color: 'white' },
   primaryButton: { backgroundColor: theme.colors.primary, height: 54, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryButtonText: { color: 'white', fontWeight: '900', fontSize: 15 },
+  forgotText: { color: theme.colors.textMuted, textAlign: 'center', fontWeight: '700', fontSize: 12, marginTop: 2 },
   switchText: { color: theme.colors.primary, textAlign: 'center', fontWeight: '800', marginTop: 6, marginBottom: 10 },
 });

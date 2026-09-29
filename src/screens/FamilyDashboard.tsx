@@ -18,6 +18,8 @@ export function FamilyDashboard({ data, role }: { data: DashboardData; role: Ext
   const exams = useMemo(() => data.exams.filter((x) => x.student_id === studentId), [data.exams, studentId]);
   const activePackage = data.packages.find((p) => p.student_id === studentId && p.active);
   const payments = data.payments.filter((p) => p.student_id === studentId);
+  const topicProgress = data.topicProgress.filter((p) => p.student_id === studentId);
+  const goals = data.goals.filter((g) => g.student_id === studentId);
 
   const recentExam = [...exams].sort((a, b) => +new Date(b.exam_date) - +new Date(a.exam_date))[0];
   const completed = lessons.filter((l) => l.status === 'completed');
@@ -82,6 +84,8 @@ export function FamilyDashboard({ data, role }: { data: DashboardData; role: Ext
 
       {activePackage ? <View><SectionTitle title="Ders paketi" /><Card><View style={styles.packageHeader}><Text style={styles.itemTitle}>{activePackage.used_lessons}/{activePackage.total_lessons} ders kullanıldı</Text><Pill tone="primary">{activePackage.remaining_lessons} kaldı</Pill></View><ProgressBar value={(activePackage.used_lessons / activePackage.total_lessons) * 100} /></Card></View> : null}
       {role === 'parent' ? <View><SectionTitle title="Son ödeme" /><Card>{lastPayment ? <View style={styles.paymentRow}><View><Text style={styles.itemTitle}>{lastPayment.amount.toLocaleString('tr-TR')} ₺</Text><Text style={styles.itemMeta}>{new Date(lastPayment.paid_at).toLocaleDateString('tr-TR')} · {lastPayment.note ?? 'Ödeme kaydı'}</Text></View><Pill tone="success">Kaydedildi</Pill></View> : <Text style={styles.empty}>Henüz ödeme kaydı yok.</Text>}</Card></View> : null}
+      <View><SectionTitle title="Konu gelisim haritasi" /><Card>{topicProgress.length ? topicProgress.slice(0,6).map((p) => <View key={p.id} style={styles.topicRow}><View style={{flex:1}}><Text style={styles.itemTitle}>{p.topic_name}</Text><Text style={styles.itemMeta}>{p.subject_name}{p.note ? ` / ${p.note}` : ''}</Text><View style={{marginTop:8}}><ProgressBar value={p.mastery_percent} /></View></View><Text style={styles.topicPct}>%{p.mastery_percent}</Text></View>) : <Text style={styles.empty}>Henuz konu gelisimi girilmedi.</Text>}</Card></View>
+      <View><SectionTitle title="Calisma hedefleri" /><Card>{goals.length ? goals.slice(0,5).map((g) => { const pct=Math.min(100,Math.round((g.current_value/g.target_value)*100)); return <View key={g.id} style={styles.goalRow}><View style={{flex:1}}><Text style={styles.itemTitle}>{g.title}</Text><Text style={styles.itemMeta}>{g.current_value}/{g.target_value}{g.due_date ? ` / ${new Date(g.due_date).toLocaleDateString('tr-TR')}` : ''}</Text><View style={{marginTop:8}}><ProgressBar value={pct} /></View></View><Pill tone={g.completed?'success':'primary'}>{g.completed?'Tamam':`%${pct}`}</Pill></View>}) : <Text style={styles.empty}>Aktif hedef yok.</Text>}</Card></View>
     </>
   );
 }
@@ -118,4 +122,7 @@ const styles = StyleSheet.create({
   small: { color: '#AEB6D7', fontSize: 10 },
   packageHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, alignItems: 'center' },
   paymentRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
+  topicRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  topicPct: { color: theme.colors.primary, fontWeight: '900', fontSize: 15 },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
 });

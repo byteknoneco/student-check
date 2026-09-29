@@ -30,6 +30,18 @@ export function TeacherDashboard({
   const missingReports = data.lessons.filter((l) => l.status === 'planned' && +new Date(l.starts_at) < now);
   const lowPackages = data.packages.filter((p) => p.active && p.remaining_lessons <= 2);
   const monthPayments = data.payments.filter((p) => isThisMonth(p.paid_at)).reduce((sum, p) => sum + p.amount, 0);
+  const staleExamStudents = data.students.filter((student) => {
+    const exams = data.exams.filter((e) => e.student_id === student.id);
+    if (!exams.length) return true;
+    const latest = Math.max(...exams.map((e) => +new Date(e.exam_date)));
+    return now - latest > 30 * 24 * 60 * 60 * 1000;
+  });
+  const decliningStudents = data.students.filter((student) => {
+    const exams = data.exams.filter((e) => e.student_id === student.id).sort((a,b) => +new Date(a.exam_date)-+new Date(b.exam_date)).slice(-3);
+    if (exams.length < 3) return false;
+    const pct = exams.map((e) => e.score / e.max_score);
+    return pct[0] > pct[1] && pct[1] > pct[2];
+  });
 
   const quickActions: { label: string; request: TeacherActionRequest }[] = [
     { label: '＋ Yeni ders', request: { type: 'lesson' } },
@@ -38,6 +50,8 @@ export function TeacherDashboard({
     { label: '₺ Ödeme kaydı', request: { type: 'payment' } },
     { label: '▣ Ders paketi', request: { type: 'package' } },
     { label: '↗ Davet kodu', request: { type: 'invite' } },
+    { label: '+ Konu gelisimi', request: { type: 'topicProgress' } },
+    { label: '+ Calisma hedefi', request: { type: 'goal' } },
   ];
 
   return (
@@ -66,6 +80,8 @@ export function TeacherDashboard({
           <InsightRow icon="!" tone="danger" title={`${missingReports.length} raporu bekleyen geçmiş ders`} text="Tarihi geçmiş ama tamamlanmamış dersleri kapat." />
           <InsightRow icon="↯" tone="warning" title={`${overdueHomework.length} geciken ödev`} text="Son tarihi geçmiş ve henüz gönderilmemiş ödevler." border />
           <InsightRow icon="▣" tone="primary" title={`${lowPackages.length} azalan paket`} text="2 veya daha az dersi kalan aktif paketler." border />
+          <InsightRow icon="30" tone="warning" title={`${staleExamStudents.length} sinav takibi gereken ogrenci`} text="Son 30 gunde sinav sonucu olmayan ogrenciler." border />
+          <InsightRow icon="v" tone="danger" title={`${decliningStudents.length} dusen sinav trendi`} text="Son 3 sonucu arka arkaya dusen ogrenciler." border />
         </Card>
       </View>
 
