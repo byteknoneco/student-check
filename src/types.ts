@@ -39,6 +39,20 @@ export type Lesson = {
 };
 
 export type HomeworkStatus = 'assigned' | 'submitted' | 'reviewed';
+export type HomeworkFileKind = 'assignment' | 'submission' | 'feedback';
+
+export type HomeworkFile = {
+  id: string;
+  homework_id: string;
+  student_id: string;
+  uploaded_by: string;
+  kind: HomeworkFileKind;
+  storage_path: string;
+  file_name: string;
+  mime_type: string;
+  size_bytes: number;
+  created_at: string;
+};
 
 export type Homework = {
   id: string;
@@ -150,6 +164,7 @@ export type DashboardData = {
   students: Student[];
   lessons: Lesson[];
   homework: Homework[];
+  homeworkFiles: HomeworkFile[];
   exams: ExamResult[];
   packages: LessonPackage[];
   payments: Payment[];
