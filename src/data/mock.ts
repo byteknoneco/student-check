@@ -27,6 +27,7 @@ export const demoData: DashboardData = {
     { id: 'l3', student_id: 's1', student_name: 'Ahmet Yılmaz', subject_name: 'Matematik', starts_at: at(-3, 18), duration_minutes: 60, status: 'completed', topic: 'Türev', teacher_note: 'Konu kavrayışı iyi. Problem çözme hızını artıracağız.', attendance: 'present' },
     { id: 'l4', student_id: 's3', student_name: 'Mert Demir', subject_name: 'Matematik', starts_at: at(1, 17), duration_minutes: 90, status: 'planned', topic: 'AYT Deneme Analizi', teacher_note: null, attendance: 'pending' },
   ],
+  homeworkFiles: [],
   homework: [
     { id: 'h1', student_id: 's1', student_name: 'Ahmet Yılmaz', subject_name: 'Matematik', title: 'Türev Testi 4', description: '1-25 arası sorular.', due_at: at(2, 21), status: 'assigned' },
     { id: 'h2', student_id: 's2', student_name: 'Elif Kaya', subject_name: 'Matematik', title: 'Fonksiyon Tarama Testi', description: null, due_at: at(3, 21), status: 'submitted' },
