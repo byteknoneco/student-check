@@ -5,6 +5,7 @@ import {
   DashboardData,
   ExamResult,
   Homework,
+  HomeworkFile,
   HomeworkStatus,
   Invite,
   Lesson,
@@ -18,7 +19,7 @@ import {
 } from '../types';
 
 const empty: DashboardData = {
-  students: [], lessons: [], homework: [], exams: [], packages: [], payments: [], invites: [],
+  students: [], lessons: [], homework: [], homeworkFiles: [], exams: [], packages: [], payments: [], invites: [],
   notifications: [], topicProgress: [], goals: [], messages: [], packageInfo: null,
 };
 
@@ -43,7 +44,7 @@ export async function loadDashboard(role: UserRole, userId: string): Promise<Das
   if (!supabase) {
     const base: DashboardData = {
       ...demoData,
-      packages: [], payments: [], invites: [], notifications: [], topicProgress: [], goals: [], messages: [],
+      packages: [], payments: [], invites: [], notifications: [], topicProgress: [], goals: [], messages: [], homeworkFiles: [],
     } as DashboardData;
     if (role === 'teacher') return base;
     return {
@@ -67,6 +68,7 @@ export async function loadDashboard(role: UserRole, userId: string): Promise<Das
     supabase.from('students').select('id,full_name,grade_level,school,active,user_id').in('id', ids).order('full_name'),
     supabase.from('lessons').select('id,student_id,starts_at,duration_minutes,status,topic,teacher_note,attendance,preparation_score,participation_score,mastery_score,homework_score,cancel_reason,series_id,students(full_name),subjects(name)').in('student_id', ids).order('starts_at'),
     supabase.from('homework').select('id,student_id,title,description,due_at,status,teacher_feedback,submitted_at,reviewed_at,students(full_name),subjects(name)').in('student_id', ids).order('due_at'),
+    supabase.from('homework_files').select('id,homework_id,student_id,uploaded_by,kind,storage_path,file_name,mime_type,size_bytes,created_at').in('student_id', ids).order('created_at'),
     supabase.from('exam_results').select('id,student_id,title,exam_date,score,max_score,correct_count,wrong_count,blank_count,note,students(full_name),subjects(name)').in('student_id', ids).order('exam_date'),
     supabase.from('lesson_packages').select('id,student_id,total_lessons,used_lessons,price,active,created_at,students(full_name)').in('student_id', ids).order('created_at', { ascending: false }),
     supabase.from('payments').select('id,student_id,amount,paid_at,note,students(full_name)').in('student_id', ids).order('paid_at', { ascending: false }),
@@ -79,7 +81,7 @@ export async function loadDashboard(role: UserRole, userId: string): Promise<Das
 
   const results = await Promise.all(queries);
   for (const result of results) if (result.error) throw result.error;
-  const [studentsRes, lessonsRes, homeworkRes, examsRes, packagesRes, paymentsRes, notificationsRes, progressRes, goalsRes, messagesRes, invitesRes] = results;
+  const [studentsRes, lessonsRes, homeworkRes, homeworkFilesRes, examsRes, packagesRes, paymentsRes, notificationsRes, progressRes, goalsRes, messagesRes, invitesRes] = results;
 
   const students = (studentsRes.data ?? []) as Student[];
   const lessons: Lesson[] = (lessonsRes.data ?? []).map((r: any) => ({
@@ -92,6 +94,7 @@ export async function loadDashboard(role: UserRole, userId: string): Promise<Das
     id:r.id, student_id:r.student_id, student_name:r.students?.full_name ?? 'Ogrenci', subject_name:r.subjects?.name ?? 'Ders', title:r.title,
     description:r.description, due_at:r.due_at, status:r.status, teacher_feedback:r.teacher_feedback, submitted_at:r.submitted_at, reviewed_at:r.reviewed_at,
   }));
+  const homeworkFiles = (homeworkFilesRes.data ?? []).map((r:any)=>({ ...r, size_bytes:Number(r.size_bytes) })) as HomeworkFile[];
   const exams: ExamResult[] = (examsRes.data ?? []).map((r:any)=>({ id:r.id, student_id:r.student_id, student_name:r.students?.full_name ?? 'Ogrenci', subject_name:r.subjects?.name ?? 'Ders', title:r.title, exam_date:r.exam_date, score:Number(r.score), max_score:Number(r.max_score), correct_count:r.correct_count, wrong_count:r.wrong_count, blank_count:r.blank_count, note:r.note }));
   const packages: LessonPackage[] = (packagesRes.data ?? []).map((r:any)=>({ id:r.id, student_id:r.student_id, student_name:r.students?.full_name ?? 'Ogrenci', total_lessons:r.total_lessons, used_lessons:r.used_lessons, remaining_lessons:Math.max(0,r.total_lessons-r.used_lessons), price:r.price===null?null:Number(r.price), active:r.active }));
   const payments: Payment[] = (paymentsRes.data ?? []).map((r:any)=>({ id:r.id, student_id:r.student_id, student_name:r.students?.full_name ?? 'Ogrenci', amount:Number(r.amount), paid_at:r.paid_at, note:r.note }));
@@ -102,7 +105,7 @@ export async function loadDashboard(role: UserRole, userId: string): Promise<Das
   const messages = (messagesRes.data ?? []) as Message[];
   const firstActivePackage = packages.find((p) => p.active && (role === 'teacher' || p.student_id === ids[0]));
   const packageInfo = firstActivePackage ? { total_lessons:firstActivePackage.total_lessons, used_lessons:firstActivePackage.used_lessons, remaining_lessons:firstActivePackage.remaining_lessons } : null;
-  return { students, lessons, homework, exams, packages, payments, invites, notifications, topicProgress, goals, messages, packageInfo };
+  return { students, lessons, homework, homeworkFiles, exams, packages, payments, invites, notifications, topicProgress, goals, messages, packageInfo };
 }
 
 async function ensureSubject(teacherId: string, subjectName: string) {
