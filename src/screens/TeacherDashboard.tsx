@@ -40,7 +40,9 @@ export function TeacherDashboard({
     const exams = data.exams.filter((e) => e.student_id === student.id).sort((a,b) => +new Date(a.exam_date)-+new Date(b.exam_date)).slice(-3);
     if (exams.length < 3) return false;
     const pct = exams.map((e) => e.score / e.max_score);
-    return pct[0] > pct[1] && pct[1] > pct[2];
+    const [first, second, third] = pct;
+    return first !== undefined && second !== undefined && third !== undefined
+      && first > second && second > third;
   });
 
   const quickActions: { label: string; request: TeacherActionRequest }[] = [
