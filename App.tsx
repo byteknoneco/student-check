@@ -35,7 +35,21 @@ export default function App(){
   },[session,profile?.role]);
 
   useEffect(()=>{fetchProfileAndData(false)},[session,fetchProfileAndData]);
-  useEffect(()=>{if(!profile||!supabase)return;registerPushToken(profile.id).catch(()=>{});const channel=supabase.channel(`notifications-${profile.id}`).on('postgres_changes',{event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${profile.id}`},(payload:any)=>{const n=payload.new;presentLocalNotification(n?.title??'DersTakip+',n?.body??'Yeni bildirim',n?.data??{});fetchProfileAndData(false)}).subscribe();return()=>{supabase.removeChannel(channel)};},[profile?.id]);
+  useEffect(()=>{
+    const sb=supabase;
+    if(!profile||!sb)return;
+    registerPushToken(profile.id).catch(()=>{});
+    const channel=sb.channel(`notifications-${profile.id}`).on(
+      'postgres_changes',
+      {event:'INSERT',schema:'public',table:'notifications',filter:`user_id=eq.${profile.id}`},
+      (payload:any)=>{
+        const n=payload.new;
+        presentLocalNotification(n?.title??'DersTakip+',n?.body??'Yeni bildirim',n?.data??{});
+        fetchProfileAndData(false);
+      }
+    ).subscribe();
+    return()=>{void sb.removeChannel(channel)};
+  },[profile?.id,fetchProfileAndData]);
 
   const title=useMemo(()=>{if(!profile)return'';if(tab==='home')return profile.role==='teacher'?'Bugunun ozeti':profile.role==='parent'?'Cocugumun ozeti':'Bugunku planim';if(tab==='students')return'Ogrenciler';if(tab==='calendar')return'Ders takvimi';if(tab==='homework')return'Odev takibi';return'Profil';},[profile,tab]);
   if(isSupabaseConfigured&&!session&&!loading)return <AuthScreen/>;
