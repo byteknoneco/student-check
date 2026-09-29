@@ -13,6 +13,8 @@ export type Student = {
   grade_level: string | null;
   school: string | null;
   active: boolean;
+  archived_at?: string | null;
+  private_note?: string | null;
   user_id?: string | null;
 };
 
@@ -121,7 +123,17 @@ export type AppNotification = {
   type: string;
   data: Record<string, unknown>;
   read_at: string | null;
+  deleted_at?: string | null;
   created_at: string;
+};
+
+export type NotificationPreferences = {
+  homework: boolean;
+  lessons: boolean;
+  messages: boolean;
+  exams: boolean;
+  finance: boolean;
+  general: boolean;
 };
 
 export type TopicProgress = {
@@ -144,7 +156,6 @@ export type StudyGoal = {
   completed: boolean;
 };
 
-
 export type Message = {
   id: string;
   teacher_id: string;
@@ -152,7 +163,15 @@ export type Message = {
   sender_id: string;
   sender_name: string | null;
   body: string;
+  edited_at?: string | null;
+  deleted_at?: string | null;
   created_at: string;
+};
+
+export type MessageRead = {
+  message_id: string;
+  user_id: string;
+  read_at: string;
 };
 
 export type PackageInfo = {
@@ -174,6 +193,8 @@ export type DashboardData = {
   topicProgress: TopicProgress[];
   goals: StudyGoal[];
   messages: Message[];
+  messageReads: MessageRead[];
+  hiddenMessageIds: string[];
   packageInfo: PackageInfo | null;
 };
 
@@ -187,6 +208,7 @@ export type TeacherActionRequest =
   | { type: 'invite'; studentId?: string }
   | { type: 'topicProgress'; studentId?: string }
   | { type: 'goal'; studentId?: string }
+  | { type: 'studentNote'; studentId: string; note?: string | null }
   | { type: 'completeLesson'; lesson: Lesson }
   | { type: 'lessonManage'; lesson: Lesson }
   | { type: 'reviewHomework'; homework: Homework };
