@@ -2,15 +2,16 @@
   "expo": {
     "name": "DersTakip+",
     "slug": "ders-takip-plus",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.derstakipplus.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "permissions": [
         "INTERNET",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "CAMERA"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -39,6 +40,14 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#5B5CE2"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "DersTakip+ ödev fotoğraflarını seçmek için fotoğraflarınıza erişir.",
+          "cameraPermission": "DersTakip+ ödev fotoğrafı çekmek için kameranızı kullanır.",
+          "microphonePermission": false
         }
       ]
     ]

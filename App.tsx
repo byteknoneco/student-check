@@ -18,7 +18,7 @@ import { MessageCenter } from './src/screens/MessageCenter';
 import { DashboardData, Profile, TeacherActionRequest, UserRole } from './src/types';
 import { theme } from './src/theme';
 
-const emptyData: DashboardData = { students:[],lessons:[],homework:[],exams:[],packages:[],payments:[],invites:[],notifications:[],topicProgress:[],goals:[],messages:[],packageInfo:null };
+const emptyData: DashboardData = { students:[],lessons:[],homework:[],homeworkFiles:[],exams:[],packages:[],payments:[],invites:[],notifications:[],topicProgress:[],goals:[],messages:[],packageInfo:null };
 
 export default function App(){
   const [session,setSession]=useState<Session|null>(null); const [profile,setProfile]=useState<Profile|null>(isSupabaseConfigured?null:demoProfiles.teacher); const [data,setData]=useState<DashboardData>(emptyData);

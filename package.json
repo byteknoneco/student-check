@@ -1,6 +1,6 @@
 {
   "name": "ders-takip-plus",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -23,7 +23,10 @@
     "expo-constants": "~57.0.19",
     "expo-clipboard": "~57.0.2",
     "expo-print": "~57.0.2",
-    "expo-sharing": "~57.0.22"
+    "expo-sharing": "~57.0.22",
+    "expo-image-picker": "~57.0.20",
+    "expo-document-picker": "~57.0.2",
+    "expo-file-system": "~57.0.7"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

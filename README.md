@@ -28,3 +28,7 @@ dosyalarini izleyin.
 - Mobil uygulama yalnizca Publishable Key kullanir.
 - Yetkilendirme RLS ve server-side RPC'lerle yapilir.
 - `google-services.json` workflow tarafinda opsiyonel secret olarak restore edilebilir ve `.gitignore` icindedir.
+
+## v0.3.1 - Odev fotograf/PDF
+
+Odevlere fotograf ve PDF ekleme, ogrenci teslim dosyalari ve ogretmen geri bildirim dosyalari eklendi. Supabase tarafinda `005_homework_files.sql` migration'i calistirilmalidir. Ayrintilar `HOMEWORK_FILES_SETUP_v0.3.1.md` dosyasindadir.
