@@ -15,14 +15,24 @@ const isThisMonth = (iso: string) => {
 
 export function TeacherDashboard({
   data,
+  profileId,
   onAction,
   onTab,
+  onMessages,
+  onNotifications,
 }: {
   data: DashboardData;
+  profileId: string;
   onAction: (request: TeacherActionRequest) => void;
   onTab: (tab: TabKey) => void;
+  onMessages: () => void;
+  onNotifications: () => void;
 }) {
   const now = Date.now();
+  const activeStudents=data.students.filter(s=>s.active);
+  const submittedHomework=data.homework.filter(h=>h.status==='submitted');
+  const unreadNotifications=data.notifications.filter(n=>!n.read_at);
+  const unreadMessages=data.messages.filter(m=>m.sender_id!==profileId&&!m.deleted_at&&!data.messageReads.some(r=>r.message_id===m.id&&r.user_id===profileId));
   const todayLessons = data.lessons.filter((l) => isToday(l.starts_at) && l.status !== 'cancelled');
   const waitingHomework = data.homework.filter((h) => h.status !== 'reviewed');
   const completed = data.lessons.filter((l) => l.status === 'completed').length;
@@ -30,13 +40,13 @@ export function TeacherDashboard({
   const missingReports = data.lessons.filter((l) => l.status === 'planned' && +new Date(l.starts_at) < now);
   const lowPackages = data.packages.filter((p) => p.active && p.remaining_lessons <= 2);
   const monthPayments = data.payments.filter((p) => isThisMonth(p.paid_at)).reduce((sum, p) => sum + p.amount, 0);
-  const staleExamStudents = data.students.filter((student) => {
+  const staleExamStudents = activeStudents.filter((student) => {
     const exams = data.exams.filter((e) => e.student_id === student.id);
     if (!exams.length) return true;
     const latest = Math.max(...exams.map((e) => +new Date(e.exam_date)));
     return now - latest > 30 * 24 * 60 * 60 * 1000;
   });
-  const decliningStudents = data.students.filter((student) => {
+  const decliningStudents = activeStudents.filter((student) => {
     const exams = data.exams.filter((e) => e.student_id === student.id).sort((a,b) => +new Date(a.exam_date)-+new Date(b.exam_date)).slice(-3);
     if (exams.length < 3) return false;
     const pct = exams.map((e) => e.score / e.max_score);
@@ -68,12 +78,22 @@ export function TeacherDashboard({
       </View>
 
       <View style={styles.grid}>
-        <StatCard label="Aktif öğrenci" value={String(data.students.length)} hint="Bu dönem" tone="primary" />
+        <StatCard label="Aktif öğrenci" value={String(activeStudents.length)} hint="Bu dönem" tone="primary" />
         <StatCard label="Tamamlanan ders" value={String(completed)} hint="Kayıtlı dersler" tone="success" />
       </View>
       <View style={styles.grid}>
         <StatCard label="Bekleyen ödev" value={String(waitingHomework.length)} hint="Takip gerekiyor" tone="warning" />
         <StatCard label="Bu ay tahsilat" value={`${Math.round(monthPayments).toLocaleString('tr-TR')} ₺`} hint="Kayıtlı ödemeler" tone="danger" />
+      </View>
+
+      <View>
+        <SectionTitle title="Bugünün işleri" />
+        <Card>
+          <TaskRow count={submittedHomework.length} title="Değerlendirme bekleyen ödev" onPress={()=>onTab('homework')}/>
+          <TaskRow count={unreadMessages.length} title="Okunmamış mesaj" onPress={onMessages} border/>
+          <TaskRow count={unreadNotifications.length} title="Okunmamış bildirim" onPress={onNotifications} border/>
+          <TaskRow count={missingReports.length} title="Raporu kapanmamış geçmiş ders" onPress={()=>onTab('calendar')} border/>
+        </Card>
       </View>
 
       <View>
@@ -109,6 +129,14 @@ export function TeacherDashboard({
       </View>
 
       <View>
+        <SectionTitle title="Son hareketler" />
+        <Card>
+          {buildActivity(data).slice(0,6).map((a,i)=><View key={a.key} style={[styles.activityRow,i>0&&styles.rowBorder]}><View style={styles.activityDot}/><View style={{flex:1}}><Text style={styles.activityTitle}>{a.title}</Text><Text style={styles.muted}>{a.meta}</Text></View><Text style={styles.activityTime}>{a.time}</Text></View>)}
+          {!buildActivity(data).length?<Text style={styles.empty}>Henüz hareket yok.</Text>:null}
+        </Card>
+      </View>
+
+      <View>
         <SectionTitle title="Hızlı işlemler" />
         <View style={styles.actions}>
           {quickActions.map((item) => <Pressable key={item.label} onPress={() => onAction(item.request)} style={styles.action}><Text style={styles.actionText}>{item.label}</Text></Pressable>)}
@@ -118,7 +146,7 @@ export function TeacherDashboard({
       <View>
         <SectionTitle title="Öğrenci özeti" action="Tümünü gör" onPress={() => onTab('students')} />
         <Card>
-          {data.students.length ? data.students.slice(0, 4).map((s, i) => {
+          {activeStudents.length ? activeStudents.slice(0, 4).map((s, i) => {
             const activePackage = data.packages.find((p) => p.student_id === s.id && p.active);
             return (
               <View key={s.id} style={[styles.studentRow, i > 0 && styles.rowBorder]}>
@@ -132,6 +160,17 @@ export function TeacherDashboard({
       </View>
     </>
   );
+}
+
+function TaskRow({count,title,onPress,border=false}:{count:number;title:string;onPress:()=>void;border?:boolean}){return <Pressable onPress={onPress} style={[styles.taskRow,border&&styles.rowBorder]}><View style={[styles.taskCount,count>0&&styles.taskCountActive]}><Text style={[styles.taskCountText,count>0&&styles.taskCountTextActive]}>{count}</Text></View><Text style={styles.taskTitle}>{title}</Text><Text style={styles.chev}>›</Text></Pressable>}
+
+function buildActivity(data:DashboardData){
+  const rows:{key:string;title:string;meta:string;at:number;time:string}[]=[];
+  for(const h of data.homework){const at=h.reviewed_at?+new Date(h.reviewed_at):h.submitted_at?+new Date(h.submitted_at):0;if(at)rows.push({key:`h-${h.id}-${at}`,title:h.reviewed_at?`Ödev değerlendirildi · ${h.student_name}`:`Ödev gönderildi · ${h.student_name}`,meta:h.title,at,time:new Date(at).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})});}
+  for(const l of data.lessons.filter(x=>x.status==='completed')){const at=+new Date(l.starts_at);rows.push({key:`l-${l.id}`,title:`Ders tamamlandı · ${l.student_name}`,meta:`${l.subject_name} · ${l.topic??'Konu yok'}`,at,time:new Date(at).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})});}
+  for(const e of data.exams){const at=+new Date(e.exam_date);rows.push({key:`e-${e.id}`,title:`Sınav sonucu · ${e.student_name}`,meta:`${e.title} · %${Math.round(e.score/e.max_score*100)}`,at,time:new Date(at).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})});}
+  for(const p of data.payments){const at=+new Date(p.paid_at);rows.push({key:`p-${p.id}`,title:`Ödeme kaydı · ${p.student_name}`,meta:`${Math.round(p.amount).toLocaleString('tr-TR')} ₺`,at,time:new Date(at).toLocaleDateString('tr-TR',{day:'2-digit',month:'short'})});}
+  return rows.sort((a,b)=>b.at-a.at);
 }
 
 function InsightRow({ icon, title, text, tone, border = false }: { icon: string; title: string; text: string; tone: 'danger' | 'warning' | 'primary'; border?: boolean }) {
@@ -180,4 +219,14 @@ const styles = StyleSheet.create({
   emptyTitle: { color: theme.colors.text, fontWeight: '900', marginBottom: 5 },
   addFirst: { marginTop: 14, backgroundColor: theme.colors.primary, borderRadius: 12, paddingHorizontal: 15, paddingVertical: 11 },
   addFirstText: { color: 'white', fontWeight: '900', fontSize: 12 },
+  taskRow:{flexDirection:'row',alignItems:'center',gap:11,paddingVertical:11},
+  taskCount:{width:32,height:32,borderRadius:10,backgroundColor:'#F0F2F7',alignItems:'center',justifyContent:'center'},
+  taskCountActive:{backgroundColor:'#EEF0FF'},
+  taskCountText:{color:theme.colors.textMuted,fontWeight:'900',fontSize:12},
+  taskCountTextActive:{color:theme.colors.primary},
+  taskTitle:{flex:1,color:theme.colors.text,fontWeight:'800',fontSize:11},
+  activityRow:{flexDirection:'row',alignItems:'center',gap:10,paddingVertical:10},
+  activityDot:{width:8,height:8,borderRadius:8,backgroundColor:theme.colors.primary},
+  activityTitle:{color:theme.colors.text,fontWeight:'900',fontSize:11},
+  activityTime:{color:theme.colors.textMuted,fontSize:9,fontWeight:'800'},
 });

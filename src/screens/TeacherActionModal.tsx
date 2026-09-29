@@ -17,6 +17,7 @@ import {
   rescheduleLesson,
   reviewHomework,
   upsertTopicProgress,
+  updateStudentPrivateNote,
 } from '../services/appData';
 import { theme } from '../theme';
 import { DashboardData, Student, TeacherActionRequest } from '../types';
@@ -31,6 +32,7 @@ function Field({label,value,onChangeText,placeholder,keyboardType='default',mult
 function ScorePicker({label,value,onChange}:{label:string;value:number;onChange:(n:number)=>void}){return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><View style={styles.scoreRow}>{[1,2,3,4,5].map(n=><Pressable key={n} onPress={()=>onChange(n)} style={[styles.scoreChip,value===n&&styles.scoreChipActive]}><Text style={[styles.scoreText,value===n&&styles.scoreTextActive]}>{n}</Text></Pressable>)}</View></View>}
 
 export function TeacherActionModal({request,data,teacherId,onClose,onChanged}:{request:TeacherActionRequest|null;data:DashboardData;teacherId:string;onClose:()=>void;onChanged:()=>Promise<void>|void}){
+  const activeStudents=data.students.filter(s=>s.active);
   const [busy,setBusy]=useState(false); const [studentId,setStudentId]=useState('');
   const [fullName,setFullName]=useState(''); const [gradeLevel,setGradeLevel]=useState(''); const [school,setSchool]=useState('');
   const [subject,setSubject]=useState('Matematik'); const [date,setDate]=useState(today()); const [time,setTime]=useState('18:00'); const [duration,setDuration]=useState('60'); const [repeatWeeks,setRepeatWeeks]=useState('1');
@@ -44,17 +46,19 @@ export function TeacherActionModal({request,data,teacherId,onClose,onChanged}:{r
   const [progressTopic,setProgressTopic]=useState(''); const [masteryPercent,setMasteryPercent]=useState('70'); const [progressNote,setProgressNote]=useState('');
   const [goalTitle,setGoalTitle]=useState('Haftalik soru hedefi'); const [goalTarget,setGoalTarget]=useState('100'); const [goalDueDate,setGoalDueDate]=useState(plusDays(7));
   const [attachments,setAttachments]=useState<PickedHomeworkFile[]>([]);
+  const [privateNote,setPrivateNote]=useState('');
 
   useEffect(()=>{
     if(!request)return;
-    const preferred=request.type==='completeLesson'||request.type==='lessonManage'?request.lesson.student_id:request.type==='reviewHomework'?request.homework.student_id:'studentId' in request&&request.studentId?request.studentId:data.students[0]?.id??'';
+    const preferred=request.type==='completeLesson'||request.type==='lessonManage'?request.lesson.student_id:request.type==='reviewHomework'?request.homework.student_id:'studentId' in request&&request.studentId?request.studentId:activeStudents[0]?.id??'';
     setStudentId(preferred); setGeneratedCode(null); setAttachments([]);
     if(request.type==='completeLesson'){setTopic(request.lesson.topic??'');setTeacherNote(request.lesson.teacher_note??'');setAttendance(request.lesson.attendance==='absent'?'absent':'present');setPreparationScore(request.lesson.preparation_score??3);setParticipationScore(request.lesson.participation_score??3);setMasteryScore(request.lesson.mastery_score??3);setHomeworkScore(request.lesson.homework_score??3);}
     if(request.type==='lessonManage'){const d=new Date(request.lesson.starts_at);setDate(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);setTime(`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`);setCancelReason(request.lesson.cancel_reason??'');}
     if(request.type==='reviewHomework')setFeedback(request.homework.teacher_feedback??'');
+    if(request.type==='studentNote')setPrivateNote(request.note??'');
   },[request]);
 
-  const title=useMemo(()=>{if(!request)return'';return ({student:'Yeni ogrenci',lesson:'Yeni ders planla',homework:'Odev ver',exam:'Sinav sonucu ekle',payment:'Odeme kaydi',package:'Ders paketi tanimla',invite:'Davet kodu olustur',topicProgress:'Konu gelisimi',goal:'Calisma hedefi',completeLesson:'Ders sonu raporu',lessonManage:'Dersi yonet',reviewHomework:'Odevi degerlendir'} as Record<TeacherActionRequest['type'],string>)[request.type]},[request]);
+  const title=useMemo(()=>{if(!request)return'';return ({student:'Yeni ogrenci',lesson:'Yeni ders planla',homework:'Odev ver',exam:'Sinav sonucu ekle',payment:'Odeme kaydi',package:'Ders paketi tanimla',invite:'Davet kodu olustur',topicProgress:'Konu gelisimi',goal:'Calisma hedefi',completeLesson:'Ders sonu raporu',lessonManage:'Dersi yonet',reviewHomework:'Odevi degerlendir',studentNote:'Özel öğrenci notu'} as Record<TeacherActionRequest['type'],string>)[request.type]},[request]);
   if(!request)return null;
   const requireStudent=()=>{if(!studentId)throw new Error('Once bir ogrenci secin.')};
 
@@ -71,12 +75,13 @@ export function TeacherActionModal({request,data,teacherId,onClose,onChanged}:{r
     else if(request.type==='lessonManage'){if(manageMode==='cancel')await cancelLesson(request.lesson.id,cancelReason);else await rescheduleLesson(request.lesson.id,localDateTimeToIso(date,time));Alert.alert('Ders guncellendi',manageMode==='cancel'?'Ders iptal edildi.':'Ders yeni saate tasindi.');}
     else if(request.type==='topicProgress'){requireStudent();const m=Number(masteryPercent);if(!progressTopic.trim()||!Number.isInteger(m)||m<0||m>100)throw new Error('Konu ve 0-100 arasi seviye girin.');await upsertTopicProgress({teacherId,studentId,subjectName:subject,topicName:progressTopic,masteryPercent:m,note:progressNote});Alert.alert('Gelisim guncellendi','Konu haritasi guncellendi.');}
     else if(request.type==='goal'){requireStudent();const t=Number(goalTarget);if(!goalTitle.trim()||!Number.isFinite(t)||t<=0)throw new Error('Gecerli hedef girin.');await createStudyGoal({teacherId,studentId,title:goalTitle,targetValue:t,dueDate:goalDueDate});Alert.alert('Hedef olusturuldu','Hedef ogrenci profilinde gorunecek.');}
+    else if(request.type==='studentNote'){await updateStudentPrivateNote(request.studentId,privateNote);Alert.alert('Özel not kaydedildi','Bu not yalnızca öğretmen hesabında görünür.');}
     await onChanged();onClose();
   }catch(e:any){Alert.alert('Islem tamamlanamadi',e?.message??'Bilinmeyen hata');}finally{setBusy(false)}};
 
   const needsStudent=['lesson','homework','exam','payment','package','invite','topicProgress','goal'].includes(request.type);
   return <Modal visible transparent animationType="slide" onRequestClose={onClose}><KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS==='ios'?'padding':undefined}><Pressable style={styles.backdrop} onPress={onClose}/><View style={styles.sheet}><View style={styles.handle}/><View style={styles.header}><View style={{flex:1}}><Text style={styles.eyebrow}>HIZLI ISLEM</Text><Text style={styles.title}>{title}</Text></View><Pressable onPress={onClose} style={styles.close}><Text style={styles.closeText}>x</Text></Pressable></View><ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-    {needsStudent?<View style={styles.fieldWrap}><Text style={styles.label}>Ogrenci</Text>{data.students.length?<StudentPicker students={data.students} value={studentId} onChange={setStudentId}/>:<Text style={styles.warning}>Once ogrenci eklemelisiniz.</Text>}</View>:null}
+    {needsStudent?<View style={styles.fieldWrap}><Text style={styles.label}>Ogrenci</Text>{activeStudents.length?<StudentPicker students={activeStudents} value={studentId} onChange={setStudentId}/>:<Text style={styles.warning}>Once aktif bir ogrenci eklemelisiniz.</Text>}</View>:null}
     {request.type==='student'?<><Field label="Ad soyad *" value={fullName} onChangeText={setFullName}/><Field label="Sinif" value={gradeLevel} onChangeText={setGradeLevel}/><Field label="Okul" value={school} onChangeText={setSchool}/></>:null}
     {request.type==='lesson'?<><Field label="Ders" value={subject} onChangeText={setSubject}/><View style={styles.twoCol}><View style={{flex:1}}><Field label="Tarih" value={date} onChangeText={setDate}/></View><View style={{flex:.7}}><Field label="Saat" value={time} onChangeText={setTime}/></View></View><Field label="Sure (dk)" value={duration} onChangeText={setDuration} keyboardType="numeric"/><Field label="Konu" value={topic} onChangeText={setTopic}/><Field label="Haftalik tekrar sayisi" value={repeatWeeks} onChangeText={setRepeatWeeks} keyboardType="numeric"/><Text style={styles.helper}>1 tek ders, 4 ise ayni gun ve saatte 4 haftalik seri olusturur.</Text></>:null}
     {request.type==='homework'?<><Field label="Ders" value={subject} onChangeText={setSubject}/><Field label="Odev basligi *" value={homeworkTitle} onChangeText={setHomeworkTitle}/><Field label="Aciklama" value={description} onChangeText={setDescription} multiline/><Field label="Son tarih" value={dueDate} onChangeText={setDueDate}/><HomeworkAttachmentPicker files={attachments} onChange={setAttachments} label="Odev materyali (opsiyonel)"/></>:null}
@@ -89,7 +94,8 @@ export function TeacherActionModal({request,data,teacherId,onClose,onChanged}:{r
     {request.type==='lessonManage'?<><Text style={styles.label}>Islem</Text><View style={styles.chips}><Pressable onPress={()=>setManageMode('reschedule')} style={[styles.chip,manageMode==='reschedule'&&styles.chipActive]}><Text style={[styles.chipText,manageMode==='reschedule'&&styles.chipTextActive]}>Ertele</Text></Pressable><Pressable onPress={()=>setManageMode('cancel')} style={[styles.chip,manageMode==='cancel'&&styles.chipDanger]}><Text style={[styles.chipText,manageMode==='cancel'&&styles.chipTextDanger]}>Iptal et</Text></Pressable></View>{manageMode==='reschedule'?<View style={styles.twoCol}><View style={{flex:1}}><Field label="Yeni tarih" value={date} onChangeText={setDate}/></View><View style={{flex:.7}}><Field label="Yeni saat" value={time} onChangeText={setTime}/></View></View>:<Field label="Iptal nedeni" value={cancelReason} onChangeText={setCancelReason} multiline/>}</>:null}
     {request.type==='topicProgress'?<><Field label="Ders" value={subject} onChangeText={setSubject}/><Field label="Konu" value={progressTopic} onChangeText={setProgressTopic} placeholder="Orn. Turev"/><Field label="Hakimiyet %" value={masteryPercent} onChangeText={setMasteryPercent} keyboardType="numeric"/><Field label="Not" value={progressNote} onChangeText={setProgressNote} multiline/></>:null}
     {request.type==='goal'?<><Field label="Hedef" value={goalTitle} onChangeText={setGoalTitle}/><Field label="Hedef miktar" value={goalTarget} onChangeText={setGoalTarget} keyboardType="decimal-pad"/><Field label="Son tarih" value={goalDueDate} onChangeText={setGoalDueDate}/></>:null}
-    {request.type==='invite'&&generatedCode?<Pressable style={styles.secondaryButton} onPress={onClose}><Text style={styles.secondaryText}>Kapat</Text></Pressable>:<Pressable onPress={submit} disabled={busy||(needsStudent&&data.students.length===0)} style={[styles.primaryButton,(busy||(needsStudent&&data.students.length===0))&&styles.disabled]}>{busy?<ActivityIndicator color="white"/>:<Text style={styles.primaryText}>Kaydet</Text>}</Pressable>}
+    {request.type==='studentNote'?<><View style={styles.summaryBox}><Text style={styles.summaryName}>{data.students.find(s=>s.id===request.studentId)?.full_name??'Öğrenci'}</Text><Text style={styles.helper}>Bu alan veli ve öğrenciye gösterilmez.</Text></View><Field label="Öğretmene özel not" value={privateNote} onChangeText={setPrivateNote} multiline placeholder="Takip etmek istediğin özel not..."/></>:null}
+    {request.type==='invite'&&generatedCode?<Pressable style={styles.secondaryButton} onPress={onClose}><Text style={styles.secondaryText}>Kapat</Text></Pressable>:<Pressable onPress={submit} disabled={busy||(needsStudent&&activeStudents.length===0)} style={[styles.primaryButton,(busy||(needsStudent&&activeStudents.length===0))&&styles.disabled]}>{busy?<ActivityIndicator color="white"/>:<Text style={styles.primaryText}>Kaydet</Text>}</Pressable>}
     <View style={{height:20}}/>
   </ScrollView></View></KeyboardAvoidingView></Modal>;
 }

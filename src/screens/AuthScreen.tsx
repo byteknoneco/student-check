@@ -70,7 +70,7 @@ export function AuthScreen() {
         <Pressable onPress={submit} style={styles.primaryButton} disabled={loading}>
           {loading ? <ActivityIndicator color="white" /> : <Text style={styles.primaryButtonText}>{isRegister ? 'Kayıt ol' : 'Giriş yap'}</Text>}
         </Pressable>
-        {!isRegister ? <Pressable onPress={resetPassword}><Text style={styles.forgotText}>Sifremi unuttum</Text></Pressable> : null}
+        {!isRegister ? <><Text style={styles.rememberText}>Bu cihazda oturumun açık tutulur; uygulamayı kapatıp açınca tekrar şifre istenmez.</Text><Pressable onPress={resetPassword}><Text style={styles.forgotText}>Şifremi unuttum</Text></Pressable></> : null}
         <Pressable onPress={() => setIsRegister((v) => !v)}><Text style={styles.switchText}>{isRegister ? 'Zaten hesabın var mı? Giriş yap' : 'Yeni misin? Hesap oluştur'}</Text></Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
   roleTextActive: { color: 'white' },
   primaryButton: { backgroundColor: theme.colors.primary, height: 54, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
   primaryButtonText: { color: 'white', fontWeight: '900', fontSize: 15 },
+  rememberText: { color: theme.colors.textMuted, textAlign: 'center', fontWeight: '600', fontSize: 10, lineHeight: 15, marginTop: 2 },
   forgotText: { color: theme.colors.textMuted, textAlign: 'center', fontWeight: '700', fontSize: 12, marginTop: 2 },
   switchText: { color: theme.colors.primary, textAlign: 'center', fontWeight: '800', marginTop: 6, marginBottom: 10 },
 });
