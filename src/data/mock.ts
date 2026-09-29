@@ -45,5 +45,14 @@ export const demoData: DashboardData = {
     { id: 'pay1', student_id: 's1', student_name: 'Ahmet Yılmaz', amount: 2500, paid_at: at(-4, 12), note: 'Paket ödemesi' },
   ],
   invites: [],
+  notifications: [],
+  topicProgress: [
+    { id: 'tp1', student_id: 's1', subject_name: 'Matematik', topic_name: 'Turev', mastery_percent: 82, note: 'Temel kurallar iyi', updated_at: at(-3, 12) },
+    { id: 'tp2', student_id: 's1', subject_name: 'Matematik', topic_name: 'Fonksiyonlar', mastery_percent: 68, note: null, updated_at: at(-8, 12) },
+  ],
+  messages: [],
+  goals: [
+    { id: 'g1', student_id: 's1', title: 'Haftalik 100 soru', target_value: 100, current_value: 65, due_date: at(5, 12), completed: false },
+  ],
   packageInfo: { total_lessons: 10, used_lessons: 6, remaining_lessons: 4 },
 };
