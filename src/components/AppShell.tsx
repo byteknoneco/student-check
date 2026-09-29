@@ -23,6 +23,9 @@ export function AppShell({
   onTab,
   refreshing = false,
   onRefresh,
+  notificationCount = 0,
+  onNotifications,
+  onMessages,
 }: {
   children: ReactNode;
   title: string;
@@ -32,6 +35,9 @@ export function AppShell({
   onTab: (tab: TabKey) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
+  notificationCount?: number;
+  onNotifications?: () => void;
+  onMessages?: () => void;
 }) {
   const tabs: TabKey[] = role === 'teacher'
     ? ['home', 'students', 'calendar', 'homework', 'profile']
@@ -45,6 +51,8 @@ export function AppShell({
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
+        {onMessages ? <Pressable onPress={onMessages} style={styles.bell}><Text style={styles.messageText}>M</Text></Pressable> : null}
+        {onNotifications ? <Pressable onPress={onNotifications} style={styles.bell}><Text style={styles.bellText}>!</Text>{notificationCount > 0 ? <View style={styles.badge}><Text style={styles.badgeText}>{notificationCount > 99 ? '99+' : notificationCount}</Text></View> : null}</Pressable> : null}
         {onRefresh ? <Pressable onPress={onRefresh} style={styles.refresh}><Text style={styles.refreshText}>↻</Text></Pressable> : null}
         <View style={styles.avatar}><Text style={styles.avatarText}>{role === 'teacher' ? 'Ö' : role === 'parent' ? 'V' : 'A'}</Text></View>
       </View>
@@ -78,6 +86,11 @@ const styles = StyleSheet.create({
   brand: { color: theme.colors.text, fontWeight: '900', fontSize: 13, letterSpacing: 0.5 },
   title: { color: theme.colors.text, fontWeight: '900', fontSize: 25, marginTop: 5 },
   subtitle: { color: theme.colors.textMuted, marginTop: 4, fontSize: 12 },
+  bell: { width: 38, height: 38, borderRadius: 13, backgroundColor: 'white', borderWidth: 1, borderColor: theme.colors.border, justifyContent: 'center', alignItems: 'center' },
+  bellText: { color: theme.colors.primary, fontSize: 17, fontWeight: '900' },
+  messageText: { color: theme.colors.primary, fontSize: 13, fontWeight: '900' },
+  badge: { position: 'absolute', top: -5, right: -5, minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: 9, backgroundColor: theme.colors.danger, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: 'white', fontWeight: '900', fontSize: 8 },
   refresh: { width: 38, height: 38, borderRadius: 13, backgroundColor: 'white', borderWidth: 1, borderColor: theme.colors.border, justifyContent: 'center', alignItems: 'center' },
   refreshText: { color: theme.colors.primary, fontSize: 22, fontWeight: '900', marginTop: -2 },
   avatar: { width: 44, height: 44, borderRadius: 15, backgroundColor: theme.colors.primary, justifyContent: 'center', alignItems: 'center', ...theme.shadow },
