@@ -150,6 +150,7 @@ export type Message = {
   teacher_id: string;
   student_id: string;
   sender_id: string;
+  sender_name: string | null;
   body: string;
   created_at: string;
 };
