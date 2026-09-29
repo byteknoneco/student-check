@@ -52,6 +52,8 @@ export const demoData: DashboardData = {
     { id: 'tp2', student_id: 's1', subject_name: 'Matematik', topic_name: 'Fonksiyonlar', mastery_percent: 68, note: null, updated_at: at(-8, 12) },
   ],
   messages: [],
+  messageReads: [],
+  hiddenMessageIds: [],
   goals: [
     { id: 'g1', student_id: 's1', title: 'Haftalik 100 soru', target_value: 100, current_value: 65, due_date: at(5, 12), completed: false },
   ],
