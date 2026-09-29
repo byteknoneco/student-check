@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Card, Pill, SectionTitle } from '../components/UI';
 import { DashboardData, Homework, Lesson, TeacherActionRequest, UserRole } from '../types';
-import { deleteMyAccount, submitHomework } from '../services/appData';
+import { deleteMyAccount } from '../services/appData';
+import { HomeworkDetailModal } from './HomeworkDetailModal';
 import { theme } from '../theme';
 
 export function StudentsScreen({ data, onAction, onSelectStudent }: { data: DashboardData; onAction: (request: TeacherActionRequest) => void; onSelectStudent?: (studentId: string) => void }) {
@@ -81,29 +82,7 @@ export function HomeworkScreen({
   onAction?: (request: TeacherActionRequest) => void;
   onChanged?: () => Promise<void> | void;
 }) {
-  const handleHomework = async (homework: Homework) => {
-    if (role === 'teacher' && homework.status === 'submitted') {
-      onAction?.({ type: 'reviewHomework', homework });
-      return;
-    }
-    if (role === 'student' && homework.status === 'assigned') {
-      Alert.alert('Ödevi gönderdin mi?', 'Ödevi “Gönderildi” olarak işaretlemek istiyor musun?', [
-        { text: 'Vazgeç', style: 'cancel' },
-        {
-          text: 'Evet, gönderdim',
-          onPress: async () => {
-            try {
-              await submitHomework(homework.id);
-              await onChanged?.();
-              Alert.alert('Harika', 'Ödev öğretmene gönderildi olarak işaretlendi.');
-            } catch (error: any) {
-              Alert.alert('İşlem başarısız', error?.message ?? 'Ödev güncellenemedi.');
-            }
-          },
-        },
-      ]);
-    }
-  };
+  const [selectedHomework, setSelectedHomework] = useState<Homework | null>(null);
 
   return (
     <View>
@@ -111,21 +90,31 @@ export function HomeworkScreen({
       <Card>
         {data.homework.length ? data.homework.map((h, i) => {
           const overdue = h.status === 'assigned' && +new Date(h.due_at) < Date.now();
+          const files = data.homeworkFiles.filter((file) => file.homework_id === h.id);
+          const assignmentCount = files.filter((file) => file.kind === 'assignment').length;
+          const submissionCount = files.filter((file) => file.kind === 'submission').length;
           return (
-            <Pressable key={h.id} onPress={() => handleHomework(h)} style={[styles.row, i > 0 && styles.border]}>
+            <Pressable key={h.id} onPress={() => setSelectedHomework(h)} style={[styles.row, i > 0 && styles.border]}>
               <View style={styles.check}><Text style={{ fontWeight: '900', color: overdue ? theme.colors.danger : theme.colors.primary }}>{h.status === 'reviewed' ? '✓' : overdue ? '!' : '•'}</Text></View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{h.title}</Text>
                 <Text style={styles.meta}>{role === 'teacher' ? `${h.student_name} · ` : ''}{h.subject_name}</Text>
                 <Text style={[styles.meta, overdue && { color: theme.colors.danger }]}>Son tarih: {new Date(h.due_at).toLocaleDateString('tr-TR')}{overdue ? ' · Gecikti' : ''}</Text>
-                {role === 'student' && h.status === 'assigned' ? <Text style={styles.tapHint}>Dokun → gönderildi olarak işaretle</Text> : null}
-                {role === 'teacher' && h.status === 'submitted' ? <Text style={styles.tapHint}>Dokun → değerlendir</Text> : null}
+                {assignmentCount || submissionCount ? <Text style={styles.tapHint}>📎 {assignmentCount} materyal · {submissionCount} teslim dosyasi</Text> : <Text style={styles.tapHint}>Dokun → odev detayi</Text>}
               </View>
               <Pill tone={h.status === 'reviewed' ? 'success' : h.status === 'submitted' ? 'warning' : overdue ? 'danger' : 'primary'}>{h.status === 'reviewed' ? 'Tamam' : h.status === 'submitted' ? 'Gönderildi' : 'Bekliyor'}</Pill>
             </Pressable>
           );
         }) : <Empty text="Ödev kaydı yok." />}
       </Card>
+      <HomeworkDetailModal
+        homework={selectedHomework}
+        data={data}
+        role={role}
+        onClose={() => setSelectedHomework(null)}
+        onAction={onAction}
+        onChanged={onChanged}
+      />
     </View>
   );
 }
