@@ -174,7 +174,7 @@ export function TeacherActionModal({
       setBusy(true);
       if (request.type === 'student') {
         if (!fullName.trim()) throw new Error('Öğrenci adı zorunlu.');
-        await createStudent({ teacherId, fullName, gradeLevel, school });
+        await createStudent({ fullName, gradeLevel, school });
         Alert.alert('Öğrenci eklendi', `${fullName.trim()} artık öğrenci listenizde.`);
       } else if (request.type === 'lesson') {
         requireStudent();
