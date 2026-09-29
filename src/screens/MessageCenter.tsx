@@ -16,7 +16,15 @@ export function MessageCenter({visible,profile,data,onClose,onChanged}:{visible:
   useEffect(()=>{if(!data.students.some(s=>s.id===studentId))setStudentId(data.students.find(s=>s.active)?.id??data.students[0]?.id??'')},[data.students,studentId]);
   useEffect(()=>{
     if(!visible||!studentId)return;
-    markStudentMessagesRead(studentId).then(()=>onChanged()).catch(()=>undefined);
+    let cancelled=false;
+    markStudentMessagesRead(studentId)
+      .then(count=>{
+        // Refresh only when a new read receipt was actually created.
+        // Reopening an already-read conversation should be a no-op.
+        if(!cancelled&&count>0)return onChanged();
+      })
+      .catch(()=>undefined);
+    return()=>{cancelled=true};
   },[visible,studentId]);
 
   const messages=useMemo(()=>data.messages.filter(m=>m.student_id===studentId),[data.messages,studentId]);
