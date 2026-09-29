@@ -2,22 +2,45 @@
   "expo": {
     "name": "DersTakip+",
     "slug": "ders-takip-plus",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "android": {
       "package": "com.derstakipplus.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [
-        "INTERNET"
-      ]
+        "INTERNET",
+        "POST_NOTIFICATIONS"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#5B5CE2"
+      }
     },
     "ios": {
       "bundleIdentifier": "com.derstakipplus.app",
       "supportsTablet": true
     },
     "extra": {
-      "appName": "DersTakip+"
-    }
+      "appName": "DersTakip+",
+      "eas": {
+        "projectId": "REPLACE_WITH_EXPO_PROJECT_ID"
+      }
+    },
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F6F7FB"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#5B5CE2"
+        }
+      ]
+    ]
   }
 }
