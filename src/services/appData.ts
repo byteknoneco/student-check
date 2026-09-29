@@ -173,20 +173,15 @@ async function ensureSubject(teacherId: string, subjectName: string) {
   throw error;
 }
 
-export async function createStudent(input: { teacherId: string; fullName: string; gradeLevel?: string; school?: string }) {
+export async function createStudent(input: { fullName: string; gradeLevel?: string; school?: string }) {
   if (!supabase) return { id: `demo-${Date.now()}` };
-  const { data, error } = await supabase
-    .from('students')
-    .insert({
-      teacher_id: input.teacherId,
-      full_name: input.fullName.trim(),
-      grade_level: input.gradeLevel?.trim() || null,
-      school: input.school?.trim() || null,
-    })
-    .select('id')
-    .single();
+  const { data, error } = await supabase.rpc('create_student', {
+    p_full_name: input.fullName.trim(),
+    p_grade_level: input.gradeLevel?.trim() || null,
+    p_school: input.school?.trim() || null,
+  });
   if (error) throw error;
-  return data;
+  return { id: data as string };
 }
 
 export async function createLesson(input: {
